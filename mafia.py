@@ -76,6 +76,7 @@ async def setup_client(session_string, index):
         global don_index, joined_set, start_task, restarting
         text = event.raw_text or ""
 
+        # Ro'yxatdan o'tish
         if "yxatdan o'tish" in text:
             if event.buttons:
                 for row in event.buttons:
@@ -97,15 +98,28 @@ async def setup_client(session_string, index):
                             except Exception as e:
                                 print(f"[❌] {index+1}-ak ro'yxat xato: {e}")
 
+        # Aybdorlar vaqti — leave logikasi
         if "Aybdorlarni aniqlash va jazolash vaqti keldi" in text:
-            if don_index == index:
-                try:
-                    await asyncio.sleep(1)
-                    await client.send_message(TARGET_GROUP, "/leave")
-                    print(f"[👋] {index+1}-akkaunt (Don) /leave bosdi")
-                except Exception as e:
-                    print(f"[❌] /leave xato: {e}")
+            if don_index == 0:
+                # 1-akkaunt Don → faqat 2,3,4 leave qiladi
+                if index != 0:
+                    try:
+                        await asyncio.sleep(1)
+                        await client.send_message(TARGET_GROUP, "/leave")
+                        print(f"[👋] {index+1}-akkaunt leave qildi (1-ak Don)")
+                    except Exception as e:
+                        print(f"[❌] /leave xato: {e}")
+            else:
+                # Boshqa akkaunt Don → faqat shu Don leave qiladi
+                if don_index == index:
+                    try:
+                        await asyncio.sleep(1)
+                        await client.send_message(TARGET_GROUP, "/leave")
+                        print(f"[👋] {index+1}-akkaunt (Don) leave qildi")
+                    except Exception as e:
+                        print(f"[❌] /leave xato: {e}")
 
+        # O'yin tugadi
         if index == 0 and ("O'yin tugadi" in text or "G'oliblar:" in text):
             if restarting:
                 return
@@ -118,7 +132,10 @@ async def setup_client(session_string, index):
         text = event.raw_text or ""
         if "Don siz" in text or "🤵🏻 Don" in text:
             don_index = index
-            print(f"[🎩] {index+1}-akkaunt DON bo'ldi!")
+            if index == 0:
+                print(f"[🎩] 1-akkaunt DON bo'ldi! Qolganlar leave qiladi.")
+            else:
+                print(f"[🎩] {index+1}-akkaunt DON bo'ldi! U leave qiladi, 1-akkaunt qoladi.")
 
     return client
 
